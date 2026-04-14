@@ -1,16 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Host Dashboard - ChargingMate</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    
 
-    <script src="./assets/navbar.js"></script>
+  <div class="header">⚡ Host Dashboard</div>
+
+  <div class="host-container">
+
+    <!-- Profile Card -->
+    <div class="card">
+      <h3>👤 Your Details</h3>
+
+      <label>Name</label>
+      <input type="text" id="name" placeholder="Enter your name" />
+
+      <label>Phone Number</label>
+      <input type="text" id="phone" placeholder="Enter phone number" />
+
+      <button class="btn" onclick="saveDetails()">Save</button>
+    </div>
+
+    <!-- Earnings Card -->
+    <div class="card">
+      <h3>💰 Earnings</h3>
+      <p id="earnings">₹120</p>
+      <span class="subtext">Estimated earnings</span>
+    </div>
+
+    <!-- Chargers Card -->
+    <div class="card">
+      <h3>🔋 Your Chargers</h3>
+      <div id="chargerList">No chargers yet</div>
+    </div>
+
+  </div>
+
+  <!-- Navbar -->
+  <script src="./assets/navbar.js"></script>
+
+  <!-- Script -->
+  <script>
+    // Load saved details
+    const nameInput = document.getElementById("name");
+    const phoneInput = document.getElementById("phone");
+
+    nameInput.value = localStorage.getItem("host_name") || "";
+    phoneInput.value = localStorage.getItem("host_phone") || "";
+
+    function saveDetails() {
+      localStorage.setItem("host_name", nameInput.value);
+      localStorage.setItem("host_phone", phoneInput.value);
+      alert("Saved!");
+    }
+
+    // Load chargers
+    const chargers = JSON.parse(localStorage.getItem("chargers")) || [];
+    const list = document.getElementById("chargerList");
+
+    if (chargers.length === 0) {
+      list.innerText = "No chargers yet";
+    } else {
+      list.innerHTML = chargers.map(c => `
+        <div class="charger-item">
+          <i class="fa-solid fa-battery-full"></i>
+          <span>${c.name}</span>
+        </div>
+      `).join("");
+    }
+  </script>
+
 </body>
 </html>
