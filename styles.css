@@ -20,10 +20,56 @@ body {
 
 #map {
   height: calc(100vh - 50px);
-  width: 100%;
 }
 
-/* Popup styling */
+#infoBar {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  padding: 12px 18px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 1000;
+  min-width: 180px;
+}
+
+#placeName {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+#distance {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* Button */
+#addBtn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  background: #22c55e;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+/* Bigger battery icon */
+.charger-icon {
+  font-size: 32px;   /* 🔥 bigger */
+  text-align: center;
+}
+
+/* Popup */
 .leaflet-popup-content-wrapper {
   background: #1e293b;
   color: white;

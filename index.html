@@ -5,24 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChargingMate</title>
 
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
-  <!-- Your CSS -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <div class="header">
-    ⚡ ChargingMate
-  </div>
+    <div class="header">⚡ ChargingMate</div>
 
-  <div id="map"></div>
+    <div id="map"></div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <button id="addBtn">+ Add Charger</button>
 
-  <!-- Your JS -->
-  <script src="script.js"></script>
+    <div id="infoBar">
+        <div id="placeName">Select a charger</div>
+        <div id="distance">-- km</div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css"/>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 </body>
 </html>
