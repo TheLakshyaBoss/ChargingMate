@@ -2,12 +2,13 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 body {
   background: #0f172a;
   color: white;
+  -webkit-font-smoothing: antialiased;
 }
 
 .header {
@@ -15,7 +16,8 @@ body {
   text-align: center;
   font-size: 18px;
   background: #1e293b;
-  font-weight: bold;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 #map {
@@ -37,7 +39,6 @@ body {
   z-index: 1000;
 }
 
-/* 🔥 Popup button (THIS WAS MISSING) */
 .btn {
   margin-top: 8px;
   padding: 6px 10px;
@@ -75,6 +76,7 @@ body {
 
 #distance {
   font-size: 13px;
+  font-weight: 500;
   color: #94a3b8;
 }
 
@@ -92,4 +94,8 @@ body {
 /* Hide routing UI */
 .leaflet-routing-container {
   display: none;
+}
+
+#addBtn, .btn {
+  font-weight: 500;
 }
