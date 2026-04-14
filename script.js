@@ -175,11 +175,15 @@ async function getAddress(lat, lng) {
 
   const data = await res.json();
 
-  document.getElementById("placeName").innerText =
-    data.address.road || data.display_name;
+  const addr = data.address;
 
-  console.log(data.address.road || data.display_name)
+    const niceAddress = [
+        addr.suburb,
+        addr.city,
+        addr.state
+    ].filter(Boolean).join(", ");
 
+  document.getElementById("placeName").innerText = niceAddress;
 }
 
 // Distance
