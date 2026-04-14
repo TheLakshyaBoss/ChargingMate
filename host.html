@@ -3,46 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Host Dashboard - ChargingMate</title>
+  <title>Host - ChargingMate</title>
 
-  <!-- Fonts -->
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome -->
+  <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <div class="header">⚡ Host Dashboard</div>
+  <div class="header">Host</div>
 
   <div class="host-container">
 
-    <!-- Profile Card -->
-    <div class="card">
-      <h3>👤 Your Details</h3>
+    <!-- 👤 Profile -->
+    <div class="profile-card">
+      <div class="profile-left">
+        <div class="avatar">
+          <i class="fa-solid fa-user"></i>
+        </div>
+      </div>
 
-      <label>Name</label>
-      <input type="text" id="name" placeholder="Enter your name" />
-
-      <label>Phone Number</label>
-      <input type="text" id="phone" placeholder="Enter phone number" />
-
-      <button class="btn" onclick="saveDetails()">Save</button>
+      <div class="profile-right">
+        <div class="name">Lakshya</div>
+        <div class="phone">+91 98765 43210</div>
+      </div>
     </div>
 
-    <!-- Earnings Card -->
-    <div class="card">
-      <h3>💰 Earnings</h3>
-      <p id="earnings">₹120</p>
-      <span class="subtext">Estimated earnings</span>
+    <!-- 💰 Earnings -->
+    <div class="section">
+      <div class="section-title">Earnings</div>
+      <div class="earnings">₹120</div>
+      <div class="subtext">Estimated</div>
     </div>
 
-    <!-- Chargers Card -->
-    <div class="card">
-      <h3>🔋 Your Chargers</h3>
-      <div id="chargerList">No chargers yet</div>
+    <!-- 🔋 Chargers -->
+    <div class="section">
+      <div class="section-title">Your Chargers</div>
+      <div id="chargerList"></div>
     </div>
 
   </div>
@@ -50,30 +51,15 @@
   <!-- Navbar -->
   <script src="./assets/navbar.js"></script>
 
-  <!-- Script -->
   <script>
-    // Load saved details
-    const nameInput = document.getElementById("name");
-    const phoneInput = document.getElementById("phone");
-
-    nameInput.value = localStorage.getItem("host_name") || "";
-    phoneInput.value = localStorage.getItem("host_phone") || "";
-
-    function saveDetails() {
-      localStorage.setItem("host_name", nameInput.value);
-      localStorage.setItem("host_phone", phoneInput.value);
-      alert("Saved!");
-    }
-
-    // Load chargers
     const chargers = JSON.parse(localStorage.getItem("chargers")) || [];
     const list = document.getElementById("chargerList");
 
     if (chargers.length === 0) {
-      list.innerText = "No chargers yet";
+      list.innerHTML = `<div class="empty">No chargers yet</div>`;
     } else {
       list.innerHTML = chargers.map(c => `
-        <div class="charger-item">
+        <div class="charger-row">
           <i class="fa-solid fa-battery-full"></i>
           <span>${c.name}</span>
         </div>

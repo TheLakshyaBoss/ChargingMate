@@ -141,50 +141,49 @@ body {
   transform: scale(1.1);
 }
 
-/* Host container */
+/* Host.html */
+
 .host-container {
   padding: 16px;
-  padding-bottom: 100px; /* space for navbar */
+  padding-bottom: 100px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-/* Card */
-.card {
+/* Sections */
+.section {
   background: #1e293b;
-  padding: 16px;
-  border-radius: 14px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  padding: 14px;
+  border-radius: 10px;
 }
 
 /* Titles */
-.card h3 {
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
   margin-bottom: 10px;
-  font-size: 16px;
 }
 
-/* Inputs */
-.card label {
-  font-size: 13px;
+/* Rows */
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.label {
   color: #94a3b8;
-  display: block;
-  margin-top: 8px;
+  font-size: 13px;
 }
 
-.card input {
-  width: 100%;
-  margin-top: 4px;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #0f172a;
-  color: white;
+.value {
+  font-size: 14px;
 }
 
 /* Earnings */
-#earnings {
-  font-size: 24px;
+.earnings {
+  font-size: 22px;
   font-weight: 600;
 }
 
@@ -193,8 +192,8 @@ body {
   color: #94a3b8;
 }
 
-/* Charger list */
-.charger-item {
+/* Chargers */
+.charger-row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -202,6 +201,51 @@ body {
   border-bottom: 1px solid #334155;
 }
 
-.charger-item i {
+.charger-row i {
   color: #22c55e;
+}
+
+/* Empty */
+.empty {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* Profile card */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #1e293b;
+  padding: 14px;
+  border-radius: 12px;
+}
+
+/* Avatar */
+.avatar {
+  width: 48px;
+  height: 48px;
+  background: #334155;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22c55e;
+  font-size: 20px;
+}
+
+/* Right side */
+.profile-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.phone {
+  font-size: 13px;
+  color: #94a3b8;
 }
