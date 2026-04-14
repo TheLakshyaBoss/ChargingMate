@@ -1,0 +1,46 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+body {
+  background: #0f172a;
+  color: white;
+}
+
+.header {
+  padding: 12px;
+  text-align: center;
+  font-size: 18px;
+  background: #1e293b;
+  font-weight: bold;
+}
+
+#map {
+  height: calc(100vh - 50px);
+  width: 100%;
+}
+
+/* Popup styling */
+.leaflet-popup-content-wrapper {
+  background: #1e293b;
+  color: white;
+  border-radius: 10px;
+}
+
+.leaflet-popup-tip {
+  background: #1e293b;
+}
+
+/* Button */
+.btn {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #22c55e;
+  border: none;
+  border-radius: 6px;
+  color: black;
+  cursor: pointer;
+}
