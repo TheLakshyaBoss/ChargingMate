@@ -1,9 +1,7 @@
-// 🔥 SUPABASE INIT
 const SUPABASE_URL = "https://vkwbzlnnmnblfpbsuvtz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_GbasoWtwqxpZt_lcs6GxjQ_I3hohy36";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 🔥 INJECT MODAL
 document.addEventListener("DOMContentLoaded", () => {
@@ -72,7 +70,7 @@ async function handleAuth() {
 
   if (isSignup) {
     // 🔥 CREATE USER
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("users")
       .insert([{ name, password, phone }])
       .select()
@@ -87,7 +85,7 @@ async function handleAuth() {
 
   } else {
     // 🔍 LOGIN
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("users")
       .select("*")
       .eq("name", name)
