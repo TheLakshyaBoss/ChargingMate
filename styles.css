@@ -57,6 +57,7 @@ body {
 
 /* Info bar */
 #infoBar {
+  display: none;
   position: absolute;
   bottom: 70px;
   left: 50%;
@@ -264,7 +265,7 @@ body {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .modal-box {

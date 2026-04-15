@@ -3,18 +3,19 @@ const SUPABASE_KEY = "sb_publishable_GbasoWtwqxpZt_lcs6GxjQ_I3hohy36";
 
 window.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 🔥 AUTH MODAL
 document.addEventListener("DOMContentLoaded", () => {
   injectAuthUI();
 
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) {
-    openModal();
-  } else {
-    applyUser(user);
-  }
-});
+  setTimeout(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
 
+    if (!user) {
+      openModal();   // ✅ force open after DOM ready
+    } else {
+      applyUser(user);
+    }
+  }, 100); // small delay ensures DOM exists
+});
 
 // 🧩 UI INJECTION
 function injectAuthUI() {
@@ -117,7 +118,11 @@ function applyUser(user) {
 
 // 🎨 MODAL CONTROL
 function openModal() {
-  document.getElementById("authModal").classList.remove("hidden");
+  const modal = document.getElementById("authModal");
+  if (modal) {
+    modal.classList.remove("hidden");
+    modal.style.display = "flex"; // 🔥 force visible
+  }
 }
 
 function closeModal() {
