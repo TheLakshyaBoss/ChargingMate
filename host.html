@@ -1,88 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Host - ChargingMate</title>
+  <title>Host</title>
 
-  <!-- Font -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- FONT FIX -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Icons -->
+  <link rel="stylesheet" href="styles.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
-  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <div class="header">Host</div>
+<div class="header">Host</div>
 
-  <div class="host-container">
+<div class="host-container">
 
-    <!-- Profile -->
-    <div class="profile-card">
-      <div class="avatar">
-        <i class="fa-solid fa-user"></i>
-      </div>
-
-      <div class="profile-right">
-        <div class="name">--</div>
-        <div class="phone">--</div>
-      </div>
+  <div class="profile-card">
+    <div class="avatar"><i class="fa-solid fa-user"></i></div>
+    <div>
+      <div class="name">--</div>
+      <div class="phone">--</div>
     </div>
-
-    <!-- Earnings -->
-    <div class="section">
-      <div class="section-title">Earnings</div>
-      <div class="earnings">₹120</div>
-      <div class="subtext">Estimated</div>
-    </div>
-
-    <!-- Chargers -->
-    <div class="section">
-      <div class="section-title">Your Chargers</div>
-      <div id="chargerList">Loading...</div>
-    </div>
-
   </div>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./assets/auth.js"></script>
-  <script src="./assets/navbar.js"></script>
+  <div class="section">
+    <div class="section-title">Your Chargers</div>
+    <div id="chargerList"></div>
+  </div>
 
-  <script>
-    async function loadChargers() {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user) return;
+</div>
 
-      const { data, error } = await supabase
-        .from("chargers")
-        .select("*")
-        .eq("owner_id", user.id);
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./assets/auth.js"></script>
+<script src="./assets/navbar.js"></script>
 
-      const list = document.getElementById("chargerList");
+<script>
+async function loadHost() {
+  const user = JSON.parse(localStorage.getItem("user"));
 
-      if (error) {
-        list.innerText = "Error loading chargers";
-        return;
-      }
+  const { data } = await window.db
+    .from("chargers")
+    .select("*")
+    .eq("owner_id", user.id);
 
-      if (!data || data.length === 0) {
-        list.innerHTML = `<div class="empty">No chargers yet</div>`;
-        return;
-      }
+  document.getElementById("chargerList").innerHTML =
+    data.length
+      ? data.map(c => `<div class="charger-row">${c.name}</div>`).join("")
+      : `<div class="empty">No chargers yet</div>`;
+}
 
-      list.innerHTML = data.map(c => `
-        <div class="charger-row">
-          <i class="fa-solid fa-battery-full"></i>
-          <span>${c.name}</span>
-        </div>
-      `).join("");
-    }
+loadHost();
 
-    document.addEventListener("DOMContentLoaded", loadChargers);
-  </script>
+
+// 🔥 REALTIME
+window.db.channel("bookings")
+  .on("postgres_changes", {
+    event: "INSERT",
+    schema: "public",
+    table: "bookings"
+  }, async (payload) => {
+
+    const booking = payload.new;
+
+    const { data: charger } = await window.db
+      .from("chargers")
+      .select("*")
+      .eq("id", booking.charger_id)
+      .single();
+
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (charger.owner_id !== user.id) return;
+
+    showBookingPopup();
+  })
+  .subscribe();
+
+
+function showBookingPopup() {
+  const popup = document.createElement("div");
+
+  popup.className = "booking-popup clean";
+  popup.innerHTML = `
+    <div>⚡ New booking request</div>
+    <button onclick="this.parentElement.remove()">OK</button>
+  `;
+
+  document.body.appendChild(popup);
+}
+</script>
 
 </body>
 </html>
