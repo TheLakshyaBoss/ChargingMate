@@ -58,15 +58,19 @@ body {
 /* Info bar */
 #infoBar {
   position: fixed;
-  bottom: 80px;
+  bottom: 90px;
   left: 10px;
   right: 10px;
+
   background: #1e293b;
   padding: 12px;
   border-radius: 10px;
+
   display: none;
   flex-direction: column;
   gap: 4px;
+
+  z-index: 9999;
 }
 
 #placeName {
