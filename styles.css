@@ -22,6 +22,7 @@ body {
 
 #map {
   height: calc(100vh - 110px);
+  z-index: 1;
 }
 
 /* Add button */
@@ -69,6 +70,7 @@ body {
   display: none;
   flex-direction: column;
   gap: 4px;
+  pointer-events: auto;
 
   z-index: 9999;
 }
