@@ -19,52 +19,69 @@
 
   <div class="host-container">
 
-    <!-- 👤 Profile -->
+    <!-- Profile -->
     <div class="profile-card">
-      <div class="profile-left">
-        <div class="avatar">
-          <i class="fa-solid fa-user"></i>
-        </div>
+      <div class="avatar">
+        <i class="fa-solid fa-user"></i>
       </div>
 
       <div class="profile-right">
-        <div class="name">Lakshya</div>
-        <div class="phone">+91 98765 43210</div>
+        <div class="name">--</div>
+        <div class="phone">--</div>
       </div>
     </div>
 
-    <!-- 💰 Earnings -->
+    <!-- Earnings -->
     <div class="section">
       <div class="section-title">Earnings</div>
       <div class="earnings">₹120</div>
       <div class="subtext">Estimated</div>
     </div>
 
-    <!-- 🔋 Chargers -->
+    <!-- Chargers -->
     <div class="section">
       <div class="section-title">Your Chargers</div>
-      <div id="chargerList"></div>
+      <div id="chargerList">Loading...</div>
     </div>
 
   </div>
 
-  <!-- Navbar -->
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./assets/auth.js"></script>
   <script src="./assets/navbar.js"></script>
 
   <script>
-    const chargers = JSON.parse(localStorage.getItem("chargers")) || [];
-    const list = document.getElementById("chargerList");
+    async function loadChargers() {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user) return;
 
-    if (chargers.length === 0) {
-      list.innerHTML = `<div class="empty">No chargers yet</div>`;
-    } else {
-      list.innerHTML = chargers.map(c => `
+      const { data, error } = await supabase
+        .from("chargers")
+        .select("*")
+        .eq("owner_id", user.id);
+
+      const list = document.getElementById("chargerList");
+
+      if (error) {
+        list.innerText = "Error loading chargers";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        list.innerHTML = `<div class="empty">No chargers yet</div>`;
+        return;
+      }
+
+      list.innerHTML = data.map(c => `
         <div class="charger-row">
           <i class="fa-solid fa-battery-full"></i>
           <span>${c.name}</span>
         </div>
       `).join("");
     }
+
+    document.addEventListener("DOMContentLoaded", loadChargers);
   </script>
 
 </body>
