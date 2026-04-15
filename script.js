@@ -15,28 +15,77 @@ function initMap() {
     maxZoom: 19
   }).addTo(map);
 
-  map.on("click", handleMapClick);
+  map.on("click", (e) => {
+    console.log("Clicked coords:", e.latlng.lat, e.latlng.lng);
+  });
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       userCoords = [pos.coords.latitude, pos.coords.longitude];
 
+      // ✅ ONLY user has marker
       L.marker(userCoords).addTo(map).bindPopup("You");
-      map.setView(userCoords, 14);
 
+      map.setView(userCoords, 14);
       loadChargers();
     },
-    () => {
-      showToast("Location not available");
-      loadChargers();
-    }
+    () => loadChargers()
   );
 }
 
-function handleMapClick(e) {
-  const { lat, lng } = e.latlng;
-  console.log("Clicked coords:", lat, lng);
+function createBatteryIcon() {
+  return L.divIcon({
+    className: "custom-battery-icon",
+    html: `<i class="fa-solid fa-battery-full"></i>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
 }
+
+// 🔋 LOAD CHARGERS
+async function loadChargers() {
+  const { data } = await window.db.from("chargers").select("*");
+
+  chargerMarkers.forEach(m => map.removeLayer(m));
+  chargerMarkers = [];
+
+  data.forEach(c => {
+    const marker = L.marker([c.lat, c.lng], {
+      icon: createBatteryIcon()
+    }).addTo(map);
+
+    marker.bindPopup(`
+      <b>${c.name}</b><br/>
+      <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
+      <button class="map-btn secondary" onclick="book('${c.id}')">Book</button>
+    `);
+
+    chargerMarkers.push(marker);
+  });
+}
+
+
+// 🚗 REAL ROAD ROUTE (OSRM)
+async function drawRoute(destCoords) {
+  if (routeLine) {
+    map.removeLayer(routeLine);
+  }
+
+  const url = `https://router.project-osrm.org/route/v1/driving/${userCoords[1]},${userCoords[0]};${destCoords[1]},${destCoords[0]}?overview=full&geometries=geojson`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+
+  routeLine = L.polyline(coords, {
+    weight: 5,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+}
+
 
 function startNavigation(destCoords, name) {
   if (!userCoords) return;
@@ -60,69 +109,24 @@ function stopNavigation() {
   }
 }
 
-function drawRoute(destCoords) {
-  if (routeLine) {
-    map.removeLayer(routeLine);
-  }
 
-  routeLine = L.polyline([userCoords, destCoords], {
-    weight: 4,
-    opacity: 0.6
-  }).addTo(map);
-
-  map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
-}
-
-async function loadChargers() {
-  try {
-    const { data, error } = await window.db.from("chargers").select("*");
-
-    if (error || !data) return;
-
-    chargerMarkers.forEach(m => map.removeLayer(m));
-    chargerMarkers = [];
-
-    data.forEach(c => {
-      const marker = L.marker([c.lat, c.lng]).addTo(map);
-
-      marker.bindPopup(`
-        <b>${c.name}</b><br/>
-        <button onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">
-          Navigate
-        </button>
-        <br/>
-        <button onclick="book('${c.id}')">
-          Book
-        </button>
-      `);
-
-      chargerMarkers.push(marker);
-    });
-
-  } catch {
-    showToast("Failed to load chargers");
-  }
-}
-
+// 📡 BOOK
 async function book(chargerId) {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return;
 
-  try {
-    await window.db.from("bookings").insert([
-      {
-        charger_id: chargerId,
-        user_id: user.id
-      }
-    ]);
+  await window.db.from("bookings").insert([
+    {
+      charger_id: chargerId,
+      user_id: user.id
+    }
+  ]);
 
-    showToast("Booking sent ⚡");
-
-  } catch {
-    showToast("Booking failed");
-  }
+  showToast("Booking sent ⚡");
 }
 
+
+// 🔔 TOAST
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "toast";
@@ -133,6 +137,8 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 2000);
 }
 
+
+// 📍 ADDRESS
 async function getNiceAddress(lat, lng) {
   try {
     const res = await fetch(
@@ -155,22 +161,22 @@ async function getNiceAddress(lat, lng) {
   }
 }
 
-async function updateInfo(destCoords, nameFallback) {
-  if (!userCoords) return;
 
+// 📊 INFOBAR
+async function updateInfo(destCoords, fallback) {
   const [lat, lng] = destCoords;
 
   const address = await getNiceAddress(lat, lng);
 
-  document.getElementById("placeName").innerText =
-    address || nameFallback;
+  document.getElementById("placeName").innerText = address || fallback;
 
   const dist = getDistance(userCoords, destCoords);
 
-  document.getElementById("distance").innerText =
-    dist.toFixed(2) + " km";
+  document.getElementById("distance").innerText = dist.toFixed(2) + " km";
 }
 
+
+// 📏 DISTANCE
 function getDistance(a, b) {
   const R = 6371;
 
