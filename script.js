@@ -335,3 +335,44 @@ function showReject() {
 
   document.body.appendChild(div);
 }
+
+initRealtime();
+
+function initRealtime() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  window.db
+    .channel("global-bookings")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "bookings"
+      },
+      async (payload) => {
+        const booking = payload.new;
+
+        // 🔥 HOST VIEW
+        const { data: charger } = await window.db
+          .from("chargers")
+          .select("*")
+          .eq("id", booking.charger_id)
+          .single();
+
+        if (charger?.owner_id === user.id && booking.status === "pending") {
+          showHostPopup(booking);
+        }
+
+        // 🔥 USER VIEW
+        if (booking.user_id === user.id && payload.eventType === "UPDATE") {
+          if (booking.status === "accepted") showSuccess();
+          if (booking.status === "rejected") showReject();
+        }
+      }
+    )
+    .subscribe((status) => {
+      console.log("Realtime status:", status);
+    });
+}

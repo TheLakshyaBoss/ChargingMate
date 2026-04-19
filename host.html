@@ -55,6 +55,8 @@ async function loadHost() {
 loadHost();
 
 
+
+
 // 🔥 REALTIME
 window.db.channel("host-bookings")
   .on("postgres_changes", {
@@ -81,23 +83,25 @@ window.db.channel("host-bookings")
 
 
 // 🔥 HOST POPUP
-function showHostPopup(bookingId) {
+function showHostPopup(booking) {
   const div = document.createElement("div");
-
   div.className = "modal";
 
   div.innerHTML = `
     <div class="modal-box">
-      <h3>New Request ⚡</h3>
+      <h3>New Booking ⚡</h3>
+      <p>Slot: ${booking.slot}</p>
+      <p>₹ ${booking.price}</p>
 
-      <button onclick="handleBooking('${bookingId}', 'accepted')">Accept</button>
-      <button onclick="handleBooking('${bookingId}', 'rejected')">Reject</button>
+      <div style="display:flex; gap:10px;">
+        <button onclick="handleBooking('${booking.id}', 'accepted')">Accept</button>
+        <button onclick="handleBooking('${booking.id}', 'rejected')">Reject</button>
+      </div>
     </div>
   `;
 
   document.body.appendChild(div);
 }
-
 
 // 🔥 HANDLE
 async function handleBooking(id, status) {
