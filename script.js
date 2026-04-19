@@ -57,7 +57,7 @@ async function loadChargers() {
     marker.bindPopup(`
       <b>${c.name}</b><br/>
       <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
-      <button class="map-btn secondary" onclick="book('${c.id}')">Book</button>
+      <button class="map-btn secondary" onclick="openBookingModal('${c.id}')">Book</button>
     `);
 
     chargerMarkers.push(marker);
@@ -192,4 +192,146 @@ function getDistance(a, b) {
     Math.cos(lat1) * Math.cos(lat2);
 
   return R * (2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x)));
+}
+
+
+let selectedChargerId = null;
+let selectedSlot = null;
+let selectedPrice = 0;
+
+// 🔥 OPEN BOOKING MODAL
+function openBookingModal(chargerId) {
+  selectedChargerId = chargerId;
+
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.id = "bookingModal";
+
+  modal.innerHTML = `
+    <div class="modal-box">
+      <h3>Select Slot</h3>
+
+      <div class="slot-container" id="slotContainer"></div>
+
+      <div class="price">₹ <span id="price">0</span></div>
+
+      <button id="confirmBooking">Book</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  generateSlots();
+
+  document.getElementById("confirmBooking").onclick = confirmBooking;
+}
+
+
+// 🔥 SLOT GENERATOR (clean + creative)
+function generateSlots() {
+  const container = document.getElementById("slotContainer");
+
+  const now = new Date();
+
+  for (let i = 1; i <= 6; i++) {
+    const time = new Date(now.getTime() + i * 30 * 60000);
+
+    const label = time.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    const price = 20 + i * 5;
+
+    const div = document.createElement("div");
+    div.className = "slot";
+    div.innerText = `${label} • ₹${price}`;
+
+    div.onclick = () => {
+      document.querySelectorAll(".slot").forEach(s => s.classList.remove("active"));
+      div.classList.add("active");
+
+      selectedSlot = label;
+      selectedPrice = price;
+
+      document.getElementById("price").innerText = price;
+    };
+
+    container.appendChild(div);
+  }
+}
+
+
+// 🔥 CONFIRM BOOKING
+async function confirmBooking() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!selectedSlot) return showToast("Select a slot");
+
+  await window.db.from("bookings").insert([{
+    charger_id: selectedChargerId,
+    user_id: user.id,
+    slot: selectedSlot,
+    price: selectedPrice,
+    status: "pending"
+  }]);
+
+  document.getElementById("bookingModal").remove();
+
+  showToast("Request sent ⚡");
+}
+
+
+// 🔥 REALTIME LISTENER (USER)
+window.db.channel("user-booking")
+  .on("postgres_changes", {
+    event: "UPDATE",
+    schema: "public",
+    table: "bookings"
+  }, (payload) => {
+
+    const booking = payload.new;
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (booking.user_id !== user.id) return;
+
+    if (booking.status === "accepted") {
+      showSuccess();
+    }
+
+    if (booking.status === "rejected") {
+      showReject();
+    }
+  })
+  .subscribe();
+
+
+// 🎉 SUCCESS
+function showSuccess() {
+  const div = document.createElement("div");
+  div.className = "modal";
+
+  div.innerHTML = `
+    <div class="modal-box">
+      <h3>Booking Confirmed 🎉</h3>
+      <button onclick="this.parentElement.parentElement.remove()">OK</button>
+    </div>
+  `;
+
+  document.body.appendChild(div);
+}
+
+
+// ❌ REJECT
+function showReject() {
+  const div = document.createElement("div");
+  div.className = "modal";
+
+  div.innerHTML = `
+    <div class="modal-box">
+      <h3>Request Rejected</h3>
+      <button onclick="this.parentElement.parentElement.remove()">OK</button>
+    </div>
+  `;
+
+  document.body.appendChild(div);
 }

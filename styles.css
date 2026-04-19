@@ -373,3 +373,32 @@ body {
   font-size: 22px;
   color: #22c55e;
 }
+
+
+/* Slots */
+.slot-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.slot {
+  padding: 8px;
+  background: #1e293b;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.slot.active {
+  background: #22c55e;
+  color: black;
+}
+
+/* Price */
+.price {
+  text-align: center;
+  margin: 10px 0;
+  font-size: 16px;
+}
