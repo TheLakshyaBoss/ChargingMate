@@ -55,10 +55,10 @@ async function loadChargers() {
     }).addTo(map);
 
     marker.bindPopup(`
-      <b>${c.name}</b><br/>
-      <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
-      <button class="map-btn secondary" onclick="openBookingModal('${c.id}')">Book</button>
-    `);
+    <b>${c.name}</b><br/>
+    <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
+    <button class="map-btn secondary" onclick="openBookingModal('${c.id}', '${c.owner_id}')">Book</button>
+  `);
 
     chargerMarkers.push(marker);
   });
@@ -198,10 +198,12 @@ function getDistance(a, b) {
 let selectedChargerId = null;
 let selectedSlot = null;
 let selectedPrice = 0;
+let selectedOwnerId = null;
 
 // 🔥 OPEN BOOKING MODAL
 function openBookingModal(chargerId) {
   selectedChargerId = chargerId;
+  selectedOwnerId = ownerId;
 
   const modal = document.createElement("div");
   modal.className = "modal";
@@ -270,6 +272,7 @@ async function confirmBooking() {
   await window.db.from("bookings").insert([{
     charger_id: selectedChargerId,
     user_id: user.id,
+    owner_id: selectedOwnerId,
     slot: selectedSlot,
     price: selectedPrice,
     status: "pending"
@@ -361,7 +364,7 @@ function initRealtime() {
           .eq("id", booking.charger_id)
           .single();
 
-        if (charger?.owner_id === user.id && booking.status === "pending") {
+        if (booking.owner_id === user.id && booking.status === "pending") {
           showHostPopup(booking);
         }
 
