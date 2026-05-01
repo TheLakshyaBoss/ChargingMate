@@ -39,13 +39,20 @@ function createBatteryIcon() {
 // ⭐ FONT AWESOME STARS
 function getStarsHTML(rating) {
   let html = "";
+
   for (let i = 1; i <= 5; i++) {
-    if (i <= rating) {
+    if (rating >= i) {
+      // full star
       html += `<i class="fa-solid fa-star" style="color:gold;"></i>`;
+    } else if (rating >= i - 0.5) {
+      // half star
+      html += `<i class="fa-solid fa-star-half-stroke" style="color:gold;"></i>`;
     } else {
+      // empty star
       html += `<i class="fa-regular fa-star" style="color:gold;"></i>`;
     }
   }
+
   return html;
 }
 
@@ -57,8 +64,8 @@ async function loadChargers() {
   chargerMarkers = [];
 
   data.forEach(c => {
-    const rating = Math.round(c.rating || 0);
-
+    const rating = parseFloat(c.rating) || 0;
+    
     const marker = L.marker([c.lat, c.lng], {
       icon: createBatteryIcon()
     }).addTo(map);
