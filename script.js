@@ -1,10 +1,9 @@
 let map;
 let userCoords;
-let isNavigating = false;
 let routeLine = null;
 let chargerMarkers = [];
 
-const FULL_CHARGE_PRICE = 70; // ⚡ fixed price
+const FULL_CHARGE_PRICE = 70;
 
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
@@ -37,13 +36,17 @@ function createBatteryIcon() {
   });
 }
 
-// ⭐ star generator
-function getStars(rating) {
-  let stars = "";
+// ⭐ FONT AWESOME STARS
+function getStarsHTML(rating) {
+  let html = "";
   for (let i = 1; i <= 5; i++) {
-    stars += i <= rating ? "★" : "☆";
+    if (i <= rating) {
+      html += `<i class="fa-solid fa-star" style="color:gold;"></i>`;
+    } else {
+      html += `<i class="fa-regular fa-star" style="color:gold;"></i>`;
+    }
   }
-  return stars;
+  return html;
 }
 
 // 🔋 LOAD CHARGERS
@@ -63,7 +66,7 @@ async function loadChargers() {
     marker.bindPopup(`
       <b>${c.name}</b><br/>
       <div style="margin:5px 0;">
-        ${getStars(rating)} (${rating}/5)
+        ${getStarsHTML(rating)} (${rating}/5)
       </div>
 
       <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
@@ -75,7 +78,7 @@ async function loadChargers() {
 }
 
 
-// 🚗 ROUTE (unchanged)
+// 🚗 ROUTE
 async function drawRoute(destCoords) {
   if (routeLine) map.removeLayer(routeLine);
 
@@ -118,7 +121,7 @@ function showToast(msg) {
 }
 
 
-// 📏 DISTANCE (unchanged)
+// 📏 DISTANCE
 function getDistance(a, b) {
   const R = 6371;
   const dLat = ((b[0] - a[0]) * Math.PI) / 180;
@@ -136,11 +139,10 @@ function getDistance(a, b) {
 
 
 let selectedChargerId = null;
-let selectedSlot = null;
 let selectedOwnerId = null;
 
 
-// 🔥 OPEN BOOKING MODAL (UPDATED)
+// 🔥 OPEN BOOKING MODAL (UPGRADED UI)
 function openBookingModal(chargerId, ownerId) {
   selectedChargerId = chargerId;
   selectedOwnerId = ownerId;
@@ -153,9 +155,19 @@ function openBookingModal(chargerId, ownerId) {
     <div class="modal-box">
       <h3>Select Time</h3>
 
-      <input type="time" id="timeInput" style="width:100%; padding:10px; margin:10px 0;" />
+      <div style="display:flex; gap:10px;">
+        <input type="time" id="timeInput" style="flex:1; padding:10px;" />
+        
+        <select id="ampm" style="padding:10px;">
+          <option>AM</option>
+          <option>PM</option>
+        </select>
+      </div>
 
-      <div class="price">₹ ${FULL_CHARGE_PRICE}</div>
+      <div id="timePreview" style="margin-top:10px; font-size:14px;"></div>
+      <div id="timeDiff" style="font-size:13px; color:gray;"></div>
+
+      <div class="price" style="margin-top:10px;">₹ ${FULL_CHARGE_PRICE}</div>
 
       <button id="confirmBooking">Book</button>
     </div>
@@ -163,14 +175,52 @@ function openBookingModal(chargerId, ownerId) {
 
   document.body.appendChild(modal);
 
+  document.getElementById("timeInput").addEventListener("change", updateTimeUI);
+  document.getElementById("ampm").addEventListener("change", updateTimeUI);
+
   document.getElementById("confirmBooking").onclick = confirmBooking;
 }
 
 
-// 🔥 CONFIRM BOOKING (UPDATED)
+// ⏰ UPDATE TIME UI
+function updateTimeUI() {
+  const time = document.getElementById("timeInput").value;
+  const ampm = document.getElementById("ampm").value;
+
+  if (!time) return;
+
+  let [hours, minutes] = time.split(":").map(Number);
+
+  if (ampm === "PM" && hours < 12) hours += 12;
+  if (ampm === "AM" && hours === 12) hours = 0;
+
+  const now = new Date();
+  const selected = new Date();
+
+  selected.setHours(hours);
+  selected.setMinutes(minutes);
+  selected.setSeconds(0);
+
+  const diffMs = selected - now;
+  const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+
+  const formatted = selected.toLocaleString([], {
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  document.getElementById("timePreview").innerText = formatted;
+  document.getElementById("timeDiff").innerText =
+    diffHours > 0 ? `${diffHours} hours from now` : "Time passed";
+}
+
+
+// 🔥 CONFIRM BOOKING
 async function confirmBooking() {
   const user = JSON.parse(localStorage.getItem("user"));
   const time = document.getElementById("timeInput").value;
+  const ampm = document.getElementById("ampm").value;
 
   if (!time) return showToast("Select time");
 
@@ -178,7 +228,7 @@ async function confirmBooking() {
     charger_id: selectedChargerId,
     user_id: user.id,
     owner_id: selectedOwnerId,
-    slot: time,
+    slot: `${time} ${ampm}`,
     price: FULL_CHARGE_PRICE,
     status: "pending"
   }]);
