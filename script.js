@@ -4,6 +4,8 @@ let isNavigating = false;
 let routeLine = null;
 let chargerMarkers = [];
 
+const FULL_CHARGE_PRICE = 70; // ⚡ fixed price
+
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
 });
@@ -15,17 +17,11 @@ function initMap() {
     maxZoom: 19
   }).addTo(map);
 
-  map.on("click", (e) => {
-    console.log("Clicked coords:", e.latlng.lat, e.latlng.lng);
-  });
-
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       userCoords = [pos.coords.latitude, pos.coords.longitude];
-
       L.marker(userCoords).addTo(map).bindPopup("You");
       map.setView(userCoords, 14);
-
       loadChargers();
     },
     () => loadChargers()
@@ -41,6 +37,15 @@ function createBatteryIcon() {
   });
 }
 
+// ⭐ star generator
+function getStars(rating) {
+  let stars = "";
+  for (let i = 1; i <= 5; i++) {
+    stars += i <= rating ? "★" : "☆";
+  }
+  return stars;
+}
+
 // 🔋 LOAD CHARGERS
 async function loadChargers() {
   const { data } = await window.db.from("chargers").select("*");
@@ -49,12 +54,18 @@ async function loadChargers() {
   chargerMarkers = [];
 
   data.forEach(c => {
+    const rating = Math.round(c.rating || 0);
+
     const marker = L.marker([c.lat, c.lng], {
       icon: createBatteryIcon()
     }).addTo(map);
 
     marker.bindPopup(`
       <b>${c.name}</b><br/>
+      <div style="margin:5px 0;">
+        ${getStars(rating)} (${rating}/5)
+      </div>
+
       <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
       <button class="map-btn secondary" onclick="openBookingModal('${c.id}', '${c.owner_id}')">Book</button>
     `);
@@ -64,11 +75,9 @@ async function loadChargers() {
 }
 
 
-// 🚗 ROUTE
+// 🚗 ROUTE (unchanged)
 async function drawRoute(destCoords) {
-  if (routeLine) {
-    map.removeLayer(routeLine);
-  }
+  if (routeLine) map.removeLayer(routeLine);
 
   const url = `https://router.project-osrm.org/route/v1/driving/${userCoords[1]},${userCoords[0]};${destCoords[1]},${destCoords[0]}?overview=full&geometries=geojson`;
 
@@ -88,39 +97,14 @@ async function drawRoute(destCoords) {
 function startNavigation(destCoords, name) {
   if (!userCoords) return;
 
-  isNavigating = true;
-
   document.getElementById("infoBar").style.display = "flex";
-
   drawRoute(destCoords);
   updateInfo(destCoords, name);
 }
 
 function stopNavigation() {
-  isNavigating = false;
-
   document.getElementById("infoBar").style.display = "none";
-
-  if (routeLine) {
-    map.removeLayer(routeLine);
-    routeLine = null;
-  }
-}
-
-
-// 📡 BOOK
-async function book(chargerId) {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return;
-
-  await window.db.from("bookings").insert([
-    {
-      charger_id: chargerId,
-      user_id: user.id
-    }
-  ]);
-
-  showToast("Booking sent ⚡");
+  if (routeLine) map.removeLayer(routeLine);
 }
 
 
@@ -129,55 +113,14 @@ function showToast(msg) {
   const t = document.createElement("div");
   t.className = "toast";
   t.innerText = msg;
-
   document.body.appendChild(t);
-
   setTimeout(() => t.remove(), 2000);
 }
 
 
-// 📍 ADDRESS
-async function getNiceAddress(lat, lng) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-    );
-
-    const data = await res.json();
-
-    return (
-      data.address?.road ||
-      data.address?.neighbourhood ||
-      data.address?.suburb ||
-      data.address?.village ||
-      data.address?.town ||
-      data.display_name?.split(",")[0] ||
-      "Selected Location"
-    );
-  } catch {
-    return "Selected Location";
-  }
-}
-
-
-// 📊 INFOBAR
-async function updateInfo(destCoords, fallback) {
-  const [lat, lng] = destCoords;
-
-  const address = await getNiceAddress(lat, lng);
-
-  document.getElementById("placeName").innerText = address || fallback;
-
-  const dist = getDistance(userCoords, destCoords);
-
-  document.getElementById("distance").innerText = dist.toFixed(2) + " km";
-}
-
-
-// 📏 DISTANCE
+// 📏 DISTANCE (unchanged)
 function getDistance(a, b) {
   const R = 6371;
-
   const dLat = ((b[0] - a[0]) * Math.PI) / 180;
   const dLng = ((b[1] - a[1]) * Math.PI) / 180;
 
@@ -185,9 +128,8 @@ function getDistance(a, b) {
   const lat2 = (b[0] * Math.PI) / 180;
 
   const x =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.sin(dLng / 2) * Math.sin(dLng / 2) *
-    Math.cos(lat1) * Math.cos(lat2);
+    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
 
   return R * (2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x)));
 }
@@ -195,11 +137,10 @@ function getDistance(a, b) {
 
 let selectedChargerId = null;
 let selectedSlot = null;
-let selectedPrice = 0;
 let selectedOwnerId = null;
 
 
-// 🔥 OPEN BOOKING MODAL (FIXED)
+// 🔥 OPEN BOOKING MODAL (UPDATED)
 function openBookingModal(chargerId, ownerId) {
   selectedChargerId = chargerId;
   selectedOwnerId = ownerId;
@@ -210,11 +151,11 @@ function openBookingModal(chargerId, ownerId) {
 
   modal.innerHTML = `
     <div class="modal-box">
-      <h3>Select Slot</h3>
+      <h3>Select Time</h3>
 
-      <div class="slot-container" id="slotContainer"></div>
+      <input type="time" id="timeInput" style="width:100%; padding:10px; margin:10px 0;" />
 
-      <div class="price">₹ <span id="price">0</span></div>
+      <div class="price">₹ ${FULL_CHARGE_PRICE}</div>
 
       <button id="confirmBooking">Book</button>
     </div>
@@ -222,58 +163,23 @@ function openBookingModal(chargerId, ownerId) {
 
   document.body.appendChild(modal);
 
-  generateSlots();
-
   document.getElementById("confirmBooking").onclick = confirmBooking;
 }
 
 
-// 🔥 SLOT GENERATOR
-function generateSlots() {
-  const container = document.getElementById("slotContainer");
-
-  const now = new Date();
-
-  for (let i = 1; i <= 6; i++) {
-    const time = new Date(now.getTime() + i * 30 * 60000);
-
-    const label = time.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-    const price = 20 + i * 5;
-
-    const div = document.createElement("div");
-    div.className = "slot";
-    div.innerText = `${label} • ₹${price}`;
-
-    div.onclick = () => {
-      document.querySelectorAll(".slot").forEach(s => s.classList.remove("active"));
-      div.classList.add("active");
-
-      selectedSlot = label;
-      selectedPrice = price;
-
-      document.getElementById("price").innerText = price;
-    };
-
-    container.appendChild(div);
-  }
-}
-
-
-// 🔥 CONFIRM BOOKING
+// 🔥 CONFIRM BOOKING (UPDATED)
 async function confirmBooking() {
   const user = JSON.parse(localStorage.getItem("user"));
-  if (!selectedSlot) return showToast("Select a slot");
+  const time = document.getElementById("timeInput").value;
+
+  if (!time) return showToast("Select time");
 
   await window.db.from("bookings").insert([{
     charger_id: selectedChargerId,
     user_id: user.id,
     owner_id: selectedOwnerId,
-    slot: selectedSlot,
-    price: selectedPrice,
+    slot: time,
+    price: FULL_CHARGE_PRICE,
     status: "pending"
   }]);
 
