@@ -23,10 +23,9 @@ function initMap() {
     (pos) => {
       userCoords = [pos.coords.latitude, pos.coords.longitude];
 
-      // ✅ ONLY user has marker
       L.marker(userCoords).addTo(map).bindPopup("You");
-
       map.setView(userCoords, 14);
+
       loadChargers();
     },
     () => loadChargers()
@@ -55,17 +54,17 @@ async function loadChargers() {
     }).addTo(map);
 
     marker.bindPopup(`
-    <b>${c.name}</b><br/>
-    <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
-    <button class="map-btn secondary" onclick="openBookingModal('${c.id}', '${c.owner_id}')">Book</button>
-  `);
+      <b>${c.name}</b><br/>
+      <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
+      <button class="map-btn secondary" onclick="openBookingModal('${c.id}', '${c.owner_id}')">Book</button>
+    `);
 
     chargerMarkers.push(marker);
   });
 }
 
 
-// 🚗 REAL ROAD ROUTE (OSRM)
+// 🚗 ROUTE
 async function drawRoute(destCoords) {
   if (routeLine) {
     map.removeLayer(routeLine);
@@ -85,7 +84,6 @@ async function drawRoute(destCoords) {
 
   map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
 }
-
 
 function startNavigation(destCoords, name) {
   if (!userCoords) return;
@@ -200,8 +198,9 @@ let selectedSlot = null;
 let selectedPrice = 0;
 let selectedOwnerId = null;
 
-// 🔥 OPEN BOOKING MODAL
-function openBookingModal(chargerId) {
+
+// 🔥 OPEN BOOKING MODAL (FIXED)
+function openBookingModal(chargerId, ownerId) {
   selectedChargerId = chargerId;
   selectedOwnerId = ownerId;
 
@@ -229,7 +228,7 @@ function openBookingModal(chargerId) {
 }
 
 
-// 🔥 SLOT GENERATOR (clean + creative)
+// 🔥 SLOT GENERATOR
 function generateSlots() {
   const container = document.getElementById("slotContainer");
 
@@ -281,101 +280,4 @@ async function confirmBooking() {
   document.getElementById("bookingModal").remove();
 
   showToast("Request sent ⚡");
-}
-
-
-// 🔥 REALTIME LISTENER (USER)
-window.db.channel("user-booking")
-  .on("postgres_changes", {
-    event: "UPDATE",
-    schema: "public",
-    table: "bookings"
-  }, (payload) => {
-
-    const booking = payload.new;
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (booking.user_id !== user.id) return;
-
-    if (booking.status === "accepted") {
-      showSuccess();
-    }
-
-    if (booking.status === "rejected") {
-      showReject();
-    }
-  })
-  .subscribe();
-
-
-// 🎉 SUCCESS
-function showSuccess() {
-  const div = document.createElement("div");
-  div.className = "modal";
-
-  div.innerHTML = `
-    <div class="modal-box">
-      <h3>Booking Confirmed 🎉</h3>
-      <button onclick="this.parentElement.parentElement.remove()">OK</button>
-    </div>
-  `;
-
-  document.body.appendChild(div);
-}
-
-
-// ❌ REJECT
-function showReject() {
-  const div = document.createElement("div");
-  div.className = "modal";
-
-  div.innerHTML = `
-    <div class="modal-box">
-      <h3>Request Rejected</h3>
-      <button onclick="this.parentElement.parentElement.remove()">OK</button>
-    </div>
-  `;
-
-  document.body.appendChild(div);
-}
-
-initRealtime();
-
-function initRealtime() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return;
-
-  window.db
-    .channel("global-bookings")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "bookings"
-      },
-      async (payload) => {
-        const booking = payload.new;
-
-        // 🔥 HOST VIEW
-        const { data: charger } = await window.db
-          .from("chargers")
-          .select("*")
-          .eq("id", booking.charger_id)
-          .single();
-
-        if (booking.owner_id === user.id && booking.status === "pending") {
-          showHostPopup(booking);
-        }
-
-        // 🔥 USER VIEW
-        if (booking.user_id === user.id && payload.eventType === "UPDATE") {
-          if (booking.status === "accepted") showSuccess();
-          if (booking.status === "rejected") showReject();
-        }
-      }
-    )
-    .subscribe((status) => {
-      console.log("Realtime status:", status);
-    });
 }
