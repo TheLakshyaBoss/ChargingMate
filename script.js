@@ -1,5 +1,6 @@
 let map;
 let userCoords;
+let isNavigating = false;
 let routeLine = null;
 let chargerMarkers = [];
 
@@ -36,19 +37,16 @@ function createBatteryIcon() {
   });
 }
 
-// ⭐ FONT AWESOME STARS
+// ⭐ STAR LOGIC (FULL + HALF)
 function getStarsHTML(rating) {
   let html = "";
 
   for (let i = 1; i <= 5; i++) {
     if (rating >= i) {
-      // full star
       html += `<i class="fa-solid fa-star" style="color:gold;"></i>`;
     } else if (rating >= i - 0.5) {
-      // half star
       html += `<i class="fa-solid fa-star-half-stroke" style="color:gold;"></i>`;
     } else {
-      // empty star
       html += `<i class="fa-regular fa-star" style="color:gold;"></i>`;
     }
   }
@@ -65,7 +63,7 @@ async function loadChargers() {
 
   data.forEach(c => {
     const rating = parseFloat(c.rating) || 0;
-    
+
     const marker = L.marker([c.lat, c.lng], {
       icon: createBatteryIcon()
     }).addTo(map);
@@ -73,7 +71,7 @@ async function loadChargers() {
     marker.bindPopup(`
       <b>${c.name}</b><br/>
       <div style="margin:5px 0;">
-        ${getStarsHTML(rating)} (${rating}/5)
+        ${getStarsHTML(rating)} (${rating.toFixed(1)}/5)
       </div>
 
       <button class="map-btn" onclick="startNavigation([${c.lat}, ${c.lng}], '${c.name}')">Navigate</button>
@@ -107,30 +105,64 @@ async function drawRoute(destCoords) {
 function startNavigation(destCoords, name) {
   if (!userCoords) return;
 
+  isNavigating = true;
+
   document.getElementById("infoBar").style.display = "flex";
+
   drawRoute(destCoords);
   updateInfo(destCoords, name);
 }
 
 function stopNavigation() {
+  isNavigating = false;
+
   document.getElementById("infoBar").style.display = "none";
-  if (routeLine) map.removeLayer(routeLine);
+
+  if (routeLine) {
+    map.removeLayer(routeLine);
+    routeLine = null;
+  }
 }
 
 
-// 🔔 TOAST
-function showToast(msg) {
-  const t = document.createElement("div");
-  t.className = "toast";
-  t.innerText = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2000);
+// 📍 ADDRESS (RESTORED)
+async function getNiceAddress(lat, lng) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+    );
+
+    const data = await res.json();
+
+    return (
+      data.address?.road ||
+      data.address?.suburb ||
+      data.address?.town ||
+      data.display_name?.split(",")[0] ||
+      "Selected Location"
+    );
+  } catch {
+    return "Selected Location";
+  }
+}
+
+
+// 📊 INFOBAR (RESTORED)
+async function updateInfo(destCoords, fallback) {
+  const [lat, lng] = destCoords;
+
+  const address = await getNiceAddress(lat, lng);
+  document.getElementById("placeName").innerText = address || fallback;
+
+  const dist = getDistance(userCoords, destCoords);
+  document.getElementById("distance").innerText = dist.toFixed(2) + " km";
 }
 
 
 // 📏 DISTANCE
 function getDistance(a, b) {
   const R = 6371;
+
   const dLat = ((b[0] - a[0]) * Math.PI) / 180;
   const dLng = ((b[1] - a[1]) * Math.PI) / 180;
 
@@ -145,11 +177,21 @@ function getDistance(a, b) {
 }
 
 
+// 🔔 TOAST
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerText = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+
 let selectedChargerId = null;
 let selectedOwnerId = null;
 
 
-// 🔥 OPEN BOOKING MODAL (UPGRADED UI)
+// 🔥 MODAL
 function openBookingModal(chargerId, ownerId) {
   selectedChargerId = chargerId;
   selectedOwnerId = ownerId;
@@ -163,15 +205,15 @@ function openBookingModal(chargerId, ownerId) {
       <h3>Select Time</h3>
 
       <div style="display:flex; gap:10px;">
-        <input type="time" id="timeInput" style="flex:1; padding:10px;" />
+        <input type="time" id="timeInput" style="flex:1; padding:10px; background:#222; color:white; border:none;" />
         
-        <select id="ampm" style="padding:10px;">
+        <select id="ampm" style="padding:10px; background:#222; color:white; border:none;">
           <option>AM</option>
           <option>PM</option>
         </select>
       </div>
 
-      <div id="timePreview" style="margin-top:10px; font-size:14px;"></div>
+      <div id="timePreview" style="margin-top:10px;"></div>
       <div id="timeDiff" style="font-size:13px; color:gray;"></div>
 
       <div class="price" style="margin-top:10px;">₹ ${FULL_CHARGE_PRICE}</div>
@@ -189,7 +231,7 @@ function openBookingModal(chargerId, ownerId) {
 }
 
 
-// ⏰ UPDATE TIME UI
+// ⏰ FIXED TIME LOGIC
 function updateTimeUI() {
   const time = document.getElementById("timeInput").value;
   const ampm = document.getElementById("ampm").value;
@@ -204,12 +246,17 @@ function updateTimeUI() {
   const now = new Date();
   const selected = new Date();
 
-  selected.setHours(hours);
-  selected.setMinutes(minutes);
-  selected.setSeconds(0);
+  selected.setHours(hours, minutes, 0);
+
+  // 🔥 KEY FIX: handle next day
+  if (selected <= now) {
+    selected.setDate(selected.getDate() + 1);
+  }
 
   const diffMs = selected - now;
-  const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+  const diffMin = Math.floor(diffMs / (1000 * 60));
+  const h = Math.floor(diffMin / 60);
+  const m = diffMin % 60;
 
   const formatted = selected.toLocaleString([], {
     weekday: "short",
@@ -218,12 +265,16 @@ function updateTimeUI() {
   });
 
   document.getElementById("timePreview").innerText = formatted;
-  document.getElementById("timeDiff").innerText =
-    diffHours > 0 ? `${diffHours} hours from now` : "Time passed";
+
+  if (h === 0 && m > 0) {
+    document.getElementById("timeDiff").innerText = `in ${m} min`;
+  } else {
+    document.getElementById("timeDiff").innerText = `in ${h} hr ${m} min`;
+  }
 }
 
 
-// 🔥 CONFIRM BOOKING
+// 🔥 CONFIRM
 async function confirmBooking() {
   const user = JSON.parse(localStorage.getItem("user"));
   const time = document.getElementById("timeInput").value;
@@ -241,6 +292,5 @@ async function confirmBooking() {
   }]);
 
   document.getElementById("bookingModal").remove();
-
   showToast("Request sent ⚡");
 }
