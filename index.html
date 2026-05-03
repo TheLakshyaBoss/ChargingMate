@@ -15,60 +15,12 @@
 <body>
 
   <div class="header">⚡ ChargeMate</div>
-
-  <input type="text" id="searchBox" placeholder="Search location..." />
-  <div id="suggestions" class="suggestions-box"></div>
-
   <div id="map"></div>
 
   <div id="infoBar">
     <div id="placeName">Select a charger</div>
     <div id="distance">-- km</div>
   </div>
-
-  <script>
-    const input = document.getElementById("searchBox");
-    const box = document.getElementById("suggestions");
-
-    input.addEventListener("input", async () => {
-      const query = input.value.trim();
-
-      if (query.length < 3) {
-        box.innerHTML = "";
-        return;
-      }
-
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
-      );
-
-      const data = await res.json();
-
-      box.innerHTML = "";
-
-      data.slice(0, 5).forEach(place => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.innerText = place.display_name;
-
-        div.onclick = () => {
-          input.value = place.display_name;
-          box.innerHTML = "";
-
-          const lat = parseFloat(place.lat);
-          const lon = parseFloat(place.lon);
-
-          map.setView([lat, lon], 15);
-
-          L.marker([lat, lon]).addTo(map)
-            .bindPopup(place.display_name)
-            .openPopup();
-        };
-
-        box.appendChild(div);
-      });
-    });
-  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./assets/navbar.js"></script>
