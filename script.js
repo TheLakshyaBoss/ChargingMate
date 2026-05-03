@@ -39,7 +39,7 @@ function createBatteryIcon() {
   return L.divIcon({
     className: "custom-battery-icon",
     html: `<i class="fa-solid fa-battery-full" style="font-size:24px;"></i>`,
-    iconSize: [40, 40],
+    iconSize: [60, 60],
     iconAnchor: [20, 20]
   });
 }
