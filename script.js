@@ -73,10 +73,10 @@ async function loadChargers() {
 
     // ✅ Glow circle (static, smooth)
     const glow = L.circle([c.lat, c.lng], {
-      radius: 40,
+      radius: 60,
       color: "#00ff88",
       fillColor: "#00ff88",
-      fillOpacity: 0.25,
+      fillOpacity: 0.15,
       weight: 0
     }).addTo(map);
 
