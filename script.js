@@ -25,41 +25,7 @@ function initMap() {
     (pos) => {
       userCoords = [pos.coords.latitude, pos.coords.longitude];
 
-      // ✅ Bigger user icon
-      const userIcon = L.divIcon({
-        className: "user-icon",
-        html: `<i class="fa-solid fa-location-dot" style="font-size:28px; color:#00ff88;"></i>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 20]
-      });
-
-      L.marker(userCoords, { icon: userIcon })
-        .addTo(map)
-        .bindPopup("You");
-
-      // ✅ Radar pulse effect
-      const pulse = L.circle(userCoords, {
-        radius: 50,
-        color: "#00ff88",
-        fillColor: "#00ff88",
-        fillOpacity: 0.25,
-        weight: 1
-      }).addTo(map);
-
-      let growing = true;
-      setInterval(() => {
-        let r = pulse.getRadius();
-
-        if (growing) {
-          r += 20;
-          if (r > 200) growing = false;
-        } else {
-          r -= 20;
-          if (r < 50) growing = true;
-        }
-
-        pulse.setRadius(r);
-      }, 100);
+      L.marker(userCoords).addTo(map).bindPopup("You");
 
       map.setView(userCoords, 14);
       loadChargers();
@@ -68,12 +34,13 @@ function initMap() {
   );
 }
 
+// 🔋 Bigger icon
 function createBatteryIcon() {
   return L.divIcon({
     className: "custom-battery-icon",
-    html: `<i class="fa-solid fa-battery-full"></i>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15]
+    html: `<i class="fa-solid fa-battery-full" style="font-size:24px;"></i>`,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
   });
 }
 
@@ -104,6 +71,15 @@ async function loadChargers() {
   data.forEach(c => {
     const rating = parseFloat(c.rating) || 0;
 
+    // ✅ Glow circle (static, smooth)
+    const glow = L.circle([c.lat, c.lng], {
+      radius: 40,
+      color: "#00ff88",
+      fillColor: "#00ff88",
+      fillOpacity: 0.25,
+      weight: 0
+    }).addTo(map);
+
     const marker = L.marker([c.lat, c.lng], {
       icon: createBatteryIcon()
     }).addTo(map);
@@ -119,6 +95,7 @@ async function loadChargers() {
     `);
 
     chargerMarkers.push(marker);
+    chargerMarkers.push(glow); // keep track to clear later
   });
 }
 
@@ -231,7 +208,7 @@ let selectedChargerId = null;
 let selectedOwnerId = null;
 
 
-// 🔥 MODAL
+// 🔥 MODAL (unchanged)
 function openBookingModal(chargerId, ownerId) {
   selectedChargerId = chargerId;
   selectedOwnerId = ownerId;
@@ -271,7 +248,7 @@ function openBookingModal(chargerId, ownerId) {
 }
 
 
-// ⏰ TIME LOGIC
+// ⏰ TIME LOGIC (unchanged)
 function updateTimeUI() {
   const time = document.getElementById("timeInput").value;
   const ampm = document.getElementById("ampm").value;
@@ -313,7 +290,7 @@ function updateTimeUI() {
 }
 
 
-// 🔥 CONFIRM
+// 🔥 CONFIRM (unchanged)
 async function confirmBooking() {
   const user = JSON.parse(localStorage.getItem("user"));
   const time = document.getElementById("timeInput").value;
