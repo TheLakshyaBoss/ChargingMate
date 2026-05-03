@@ -24,7 +24,43 @@ function initMap() {
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       userCoords = [pos.coords.latitude, pos.coords.longitude];
-      L.marker(userCoords).addTo(map).bindPopup("You");
+
+      // ✅ Bigger user icon
+      const userIcon = L.divIcon({
+        className: "user-icon",
+        html: `<i class="fa-solid fa-location-dot" style="font-size:28px; color:#00ff88;"></i>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+      });
+
+      L.marker(userCoords, { icon: userIcon })
+        .addTo(map)
+        .bindPopup("You");
+
+      // ✅ Radar pulse effect
+      const pulse = L.circle(userCoords, {
+        radius: 50,
+        color: "#00ff88",
+        fillColor: "#00ff88",
+        fillOpacity: 0.25,
+        weight: 1
+      }).addTo(map);
+
+      let growing = true;
+      setInterval(() => {
+        let r = pulse.getRadius();
+
+        if (growing) {
+          r += 20;
+          if (r > 200) growing = false;
+        } else {
+          r -= 20;
+          if (r < 50) growing = true;
+        }
+
+        pulse.setRadius(r);
+      }, 100);
+
       map.setView(userCoords, 14);
       loadChargers();
     },
@@ -41,7 +77,7 @@ function createBatteryIcon() {
   });
 }
 
-// ⭐ STAR LOGIC (FULL + HALF)
+// ⭐ STAR LOGIC
 function getStarsHTML(rating) {
   let html = "";
 
@@ -129,7 +165,7 @@ function stopNavigation() {
 }
 
 
-// 📍 ADDRESS (RESTORED)
+// 📍 ADDRESS
 async function getNiceAddress(lat, lng) {
   try {
     const res = await fetch(
@@ -151,7 +187,7 @@ async function getNiceAddress(lat, lng) {
 }
 
 
-// 📊 INFOBAR (RESTORED)
+// 📊 INFOBAR
 async function updateInfo(destCoords, fallback) {
   const [lat, lng] = destCoords;
 
@@ -235,7 +271,7 @@ function openBookingModal(chargerId, ownerId) {
 }
 
 
-// ⏰ FIXED TIME LOGIC
+// ⏰ TIME LOGIC
 function updateTimeUI() {
   const time = document.getElementById("timeInput").value;
   const ampm = document.getElementById("ampm").value;
@@ -252,7 +288,6 @@ function updateTimeUI() {
 
   selected.setHours(hours, minutes, 0);
 
-  // 🔥 KEY FIX: handle next day
   if (selected <= now) {
     selected.setDate(selected.getDate() + 1);
   }
