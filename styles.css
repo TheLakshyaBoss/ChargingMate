@@ -402,3 +402,22 @@ body {
   margin: 10px 0;
   font-size: 16px;
 }
+
+.suggestions-box {
+  background: #222;
+  color: white;
+  position: absolute;
+  width: 100%;
+  z-index: 1000;
+  border-radius: 8px;
+  margin-top: 5px;
+}
+
+.suggestion-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background: #333;
+}
