@@ -17,6 +17,10 @@ function initMap() {
     maxZoom: 19
   }).addTo(map);
 
+  map.on("click", (e) => {
+    console.log("Clicked coords:", e.latlng.lat, e.latlng.lng);
+  });
+
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       userCoords = [pos.coords.latitude, pos.coords.longitude];
